@@ -1,8 +1,9 @@
 import psycopg2 as pc2
 import config
 
-class WorkDB:
 
+class WorkDB:
+    '''Класс соединения базы данных'''
     def __init__(self, user, password, name_db):
         self.cursor = None
         self.connection = None
@@ -11,17 +12,21 @@ class WorkDB:
         self.name_db = name_db
 
     def connect_db(self):
+        '''Функция соединения базы данных'''
         self.connection = pc2.connect(user=self.user, password=self.password, database=self.name_db)
         self.cursor = self.connection.cursor()
 
     def close_connection(self):
+        '''Функция закрытия соединения базы данных'''
         self.cursor.close()
         self.connection.close()
         print("[INFO] Connection is closed")
 
 
 class UseDB(WorkDB):
+    '''Класс запросов к базе данных'''
     def create_structure(self):
+        '''Функция создания структуры'''
         try:
             self.connect_db()
             sql_query_client = """
@@ -29,8 +34,8 @@ class UseDB(WorkDB):
                         id SERIAL PRIMARY KEY, 
                         login VARCHAR(20) NOT NULL, 
                         password VARCHAR(20) NOT NULL, 
-                        email VARCHAR(20) NOT NULL,
-                        UNIQUE(login, email));
+                        division VARCHAR(20) NOT NULL,
+                        UNIQUE(login));
                     """
             self.cursor.execute(sql_query_client)
             self.connection.commit()
@@ -40,15 +45,16 @@ class UseDB(WorkDB):
         finally:
             self.close_connection()
 
-    def add_new_user(self, login, password, email):
+    def add_new_user(self, login, password, division):
+        '''Функция добавления нового пользователя'''
         try:
             self.connect_db()
 
             sql_query = """
-                INSERT INTO user_inf(login, password, email)
+                INSERT INTO user_inf(login, password, division)
                 VALUES (%s, %s, %s);
             """
-            self.cursor.execute(sql_query, (login, password, email))
+            self.cursor.execute(sql_query, (login, password, division))
             self.connection.commit()
             print("[INFO] Successfully.")
         except Exception as err:
@@ -57,6 +63,7 @@ class UseDB(WorkDB):
             self.close_connection()
 
     def auth_user(self, login, password):
+        '''Функция авторизации'''
         try:
             self.connect_db()
             sql_query = """
@@ -64,7 +71,6 @@ class UseDB(WorkDB):
                 WHERE login = %s
                 AND password = %s;
             """
-
             self.cursor.execute(sql_query, (login, password))
             answer = self.cursor.fetchall()
             if len(answer) != 0:
@@ -78,8 +84,7 @@ class UseDB(WorkDB):
 
 
 if __name__ == '__main__':
-
     newClass = UseDB(user=config.USER, password=config.PASSWORD, name_db=config.NAME_DB)
     newClass.create_structure()
-    newClass.add_new_user(login='123', password='123', email='123')
+    newClass.add_new_user(login='123', password='123', division='123')
     print(newClass.auth_user(login='1234', password='123'))

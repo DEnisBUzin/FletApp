@@ -23,6 +23,7 @@ def main(page: ft.Page):
         page.update()
 
     def validate(e):
+        '''Функция включения кнопок при наборе'''
         if all([user_login.value, user_password.value]):
             btn_reg.disabled = False
             btn_auth.disabled = False
@@ -31,37 +32,53 @@ def main(page: ft.Page):
             btn_auth.disabled = True
         page.update()
 
-    user_email = ft.TextField(label="Введите Email", width=200, on_change=validate)
+    user_email = ft.TextField(label="Подразделение", width=200, on_change=validate)
     user_login = ft.TextField(label="Введите логин", width=200, on_change=validate)
     user_password = ft.TextField(label="Введите пароль", password=True, width=200, on_change=validate)
+    admin_password = ft.TextField(label="Код администратора", password=True, width=200, on_change=validate)
 
     def register(e):
+        '''Функция регистрации'''
         connect.create_structure()
-        connect.add_new_user(user_login.value, user_password.value, user_email.value)
-        user_login.value = ''
-        user_password.value = ''
-        user_email.value = ''
-        btn_reg.text = 'Добавлено'
-        page.update()
-        time.sleep(2)
-        btn_reg.text = 'Добавить'
-        page.update()
-
-    def auth_user(e):
-        answer = connect.auth_user(login=user_login.value, password=user_password.value)
-        if answer is not None:
+        if admin_password.value == config.ADMIN_PASSWORD:
+            connect.add_new_user(user_login.value, user_password.value, user_email.value)
             user_login.value = ''
             user_password.value = ''
-            btn_auth.text = 'Добро пожаловать'
+            user_email.value = ''
+            btn_reg.text = 'Добавлено'
+            page.update()
+            time.sleep(2)
+            btn_reg.text = 'Добавить'
+            page.update()
+        else:
+            user_login.value = ''
+            user_password.value = ''
+            user_email.value = ''
+            admin_password.value = ''
+            page.snack_bar = ft.SnackBar(ft.Text("Код администратора не верный!"))
+            page.snack_bar.open = True
+            page.update()
+
+    def auth_user(e):
+        '''Функция авторизации'''
+        answer = connect.auth_user(login=user_login.value, password=user_password.value)
+        if answer is not None:
+            page.navigation_bar.destinations[1] = ft.NavigationDestination(icon=ft.cupertino_icons.BOOK,
+                                                                           label="Личный кабинет",
+                                                                           selected_icon=ft.icons.BOOK_ONLINE)
+            page.clean()
+            page.add(panel_cabinet)
             page.update()
         else:
             page.snack_bar = ft.SnackBar(ft.Text("Аутентификация не пройдена!"))
             page.snack_bar.open = True
             page.update()
 
+    # Кнопки
     btn_reg = ft.OutlinedButton(text="Добавить", width=200, height=50, on_click=register, disabled=True)
     btn_auth = ft.OutlinedButton(text="Авторизовать", width=200, height=50, on_click=auth_user, disabled=True)
 
+    # Вкладка Регистрации
     panel_reg = ft.Row([
         ft.Column(
             [
@@ -69,11 +86,13 @@ def main(page: ft.Page):
                 user_email,
                 user_login,
                 user_password,
+                admin_password,
                 btn_reg
             ]
         ),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
+    # Вкладка Авторизации
     panel_auth = ft.Row([
         ft.Column(
             [
@@ -85,7 +104,21 @@ def main(page: ft.Page):
         ),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
+    # Вкладка Личный кабинет
+    panel_cabinet = ft.Row([
+        ft.Column(
+            [
+                ft.Text("Личный кабинет"),
+            ]
+        ),
+    ], alignment=ft.MainAxisAlignment.CENTER)
+
+    def cabinet(e):
+        '''Функция личного кабинета'''
+        pass
+
     def navigate(e):
+        '''Функция для отображения нав.бара'''
         index = page.navigation_bar.selected_index
         page.clean()
 
@@ -93,7 +126,20 @@ def main(page: ft.Page):
             page.add(panel_reg)
         elif index == 1:
             page.add(panel_auth)
+        elif index == 2:
+            page.add(panel_cabinet)
 
+    # Верхний бар
+    page.appbar = ft.AppBar(
+        title=ft.Text("Приложение для ...."),
+        actions=[
+            ft.IconButton(ft.cupertino_icons.MOON, style=ft.ButtonStyle(padding=0), on_click=change_theme_dark),
+            ft.IconButton(ft.icons.SUNNY, style=ft.ButtonStyle(padding=0), on_click=change_theme_light)
+        ],
+        bgcolor=ft.colors.with_opacity(0.04, ft.cupertino_colors.SYSTEM_BACKGROUND),
+    )
+
+    # Нижний бар
     page.navigation_bar = ft.NavigationBar(
         destinations=[
             ft.NavigationDestination(icon=ft.icons.APP_REGISTRATION, label="Регистрация"),
@@ -101,15 +147,7 @@ def main(page: ft.Page):
         ], on_change=navigate
     )
 
-    page.add(panel_auth)
+    page.add(panel_reg)
 
 
 ft.app(main)
-
-
-# ft.Row(
-#             [
-#                 ft.IconButton(ft.icons.SUNNY, on_click=change_theme_light),
-#                 ft.IconButton(ft.icons.DARK_MODE, on_click=change_theme_dark)
-#             ],
-#             alignment=ft.MainAxisAlignment.CENTER)
