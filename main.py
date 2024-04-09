@@ -3,27 +3,41 @@ from connect_db import UseDB
 import config
 import time
 
+auth_flag = False
+
 
 def main(page: ft.Page):
     page.title = "Добро пожаловать "
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = 'dark'
-    # page.window_height = 450
-    # page.window_width = 300
-    # page.window_resizable = False
 
     connect = UseDB(user=config.USER, password=config.PASSWORD, name_db=config.NAME_DB)
 
-    def change_theme_light(e):
-        page.theme_mode = 'light'
+    def theme_changed(e):
+        if page.theme_mode == ft.ThemeMode.LIGHT:
+            page.theme_mode = ft.ThemeMode.DARK
+            dark_light_icon.icon = ft.icons.SUNNY
+        else:
+            page.theme_mode = ft.ThemeMode.LIGHT
+            dark_light_icon.icon = ft.icons.BRIGHTNESS_2
         page.update()
 
-    def change_theme_dark(e):
-        page.theme_mode = 'dark'
-        page.update()
+    # Верхний бар
+    dark_light_icon = ft.IconButton(
+        icon=ft.icons.SUNNY,
+        on_click=theme_changed
+    )
+
+    page.appbar = ft.AppBar(
+        title=ft.Text("Главный центр РКО"),
+        actions=[
+            dark_light_icon
+        ],
+        bgcolor=ft.colors.with_opacity(0.04, ft.cupertino_colors.SYSTEM_BACKGROUND)
+    )
 
     def validate(e):
-        '''Функция включения кнопок при наборе'''
+        """ Функция включения кнопок при наборе """
         if all([user_login.value, user_password.value]):
             btn_reg.disabled = False
             btn_auth.disabled = False
@@ -38,7 +52,7 @@ def main(page: ft.Page):
     admin_password = ft.TextField(label="Код администратора", password=True, width=200, on_change=validate)
 
     def register(e):
-        '''Функция регистрации'''
+        """Функция регистрации"""
         connect.create_structure()
         if admin_password.value == config.ADMIN_PASSWORD:
             connect.add_new_user(user_login.value, user_password.value, user_email.value)
@@ -60,12 +74,17 @@ def main(page: ft.Page):
             page.update()
 
     def auth_user(e):
-        '''Функция авторизации'''
+        global auth_flag
+        """Функция авторизации"""
         answer = connect.auth_user(login=user_login.value, password=user_password.value)
         if answer is not None:
-            page.navigation_bar.destinations[1] = ft.NavigationDestination(icon=ft.cupertino_icons.BOOK,
+            auth_flag = True
+            page.navigation_bar.destinations[1] = ft.NavigationDestination(icon=ft.cupertino_icons.STAR,
                                                                            label="Личный кабинет",
-                                                                           selected_icon=ft.icons.BOOK_ONLINE)
+                                                                           selected_icon=ft.icons.STAR_ROUNDED)
+            user_login.value = ''
+            user_password.value = ''
+            page.appbar.title = ft.Text("Личный кабинет")
             page.clean()
             page.add(panel_cabinet)
             page.update()
@@ -109,35 +128,27 @@ def main(page: ft.Page):
         ft.Column(
             [
                 ft.Text("Личный кабинет"),
+                ft.Container()
             ]
         ),
     ], alignment=ft.MainAxisAlignment.CENTER)
 
     def cabinet(e):
-        '''Функция личного кабинета'''
         pass
 
     def navigate(e):
-        '''Функция для отображения нав.бара'''
+        global auth_flag
+        """Функция для отображения нижнего бара"""
         index = page.navigation_bar.selected_index
         page.clean()
-
         if index == 0:
             page.add(panel_reg)
         elif index == 1:
-            page.add(panel_auth)
-        elif index == 2:
-            page.add(panel_cabinet)
-
-    # Верхний бар
-    page.appbar = ft.AppBar(
-        title=ft.Text("Приложение для ...."),
-        actions=[
-            ft.IconButton(ft.cupertino_icons.MOON, style=ft.ButtonStyle(padding=0), on_click=change_theme_dark),
-            ft.IconButton(ft.icons.SUNNY, style=ft.ButtonStyle(padding=0), on_click=change_theme_light)
-        ],
-        bgcolor=ft.colors.with_opacity(0.04, ft.cupertino_colors.SYSTEM_BACKGROUND),
-    )
+            if auth_flag:
+                page.add(panel_cabinet)
+                auth_flag = True
+            else:
+                page.add(panel_auth)
 
     # Нижний бар
     page.navigation_bar = ft.NavigationBar(
