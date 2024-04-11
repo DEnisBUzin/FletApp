@@ -35,6 +35,9 @@ class UseDB(WorkDB):
                         login VARCHAR(20) NOT NULL, 
                         password VARCHAR(20) NOT NULL, 
                         division VARCHAR(20) NOT NULL,
+                        name VARCHAR(20) NOT NULL,
+                        surname VARCHAR(20) NOT NULL,
+                        zvanie VARCHAR(40) NOT NULL,
                         UNIQUE(login));
                     """
             self.cursor.execute(sql_query_client)
@@ -45,16 +48,16 @@ class UseDB(WorkDB):
         finally:
             self.close_connection()
 
-    def add_new_user(self, login, password, division):
+    def add_new_user(self, login, password, division, name, surname, zvanie):
         '''Функция добавления нового пользователя'''
         try:
             self.connect_db()
 
             sql_query = """
-                INSERT INTO user_inf(login, password, division)
-                VALUES (%s, %s, %s);
+                INSERT INTO user_inf(login, password, division, name, surname, zvanie)
+                VALUES (%s, %s, %s, %s, %s, %s);
             """
-            self.cursor.execute(sql_query, (login, password, division))
+            self.cursor.execute(sql_query, (login, password, division, name, surname, zvanie))
             self.connection.commit()
             print("[INFO] Successfully.")
         except Exception as err:

@@ -2,6 +2,7 @@ import flet as ft
 from connect_db import UseDB
 import config
 import time
+from cabinet import ModernNavBar
 
 auth_flag = False
 
@@ -10,8 +11,10 @@ def main(page: ft.Page):
     page.title = "Добро пожаловать "
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = 'dark'
+    page.adaptive = True
 
     connect = UseDB(user=config.USER, password=config.PASSWORD, name_db=config.NAME_DB)
+    cab = ModernNavBar()
 
     def theme_changed(e):
         if page.theme_mode == ft.ThemeMode.LIGHT:
@@ -22,6 +25,47 @@ def main(page: ft.Page):
             dark_light_icon.icon = ft.icons.BRIGHTNESS_2
         page.update()
 
+    def out_auth(e):
+        global auth_flag
+        page.navigation_bar.destinations[1] = ft.NavigationDestination(icon=ft.icons.VERIFIED_USER, label="Авторизация")
+        page.clean()
+        close_drawer(e)
+        page.appbar.title = ft.Text("Главный центр РКО")
+        page.add(panel_auth)
+        page.appbar.title = ft.Row(
+            [
+                ft.Text("Добро пожаловать")
+            ])
+        page.navigation_bar.visible = True
+        auth_flag = False
+        page.update()
+
+    drawer = ft.NavigationDrawer(
+        indicator_shape=None,
+        controls=[
+            cab.user_data("ОБАиП", "ст.лейтенант", "Бузин Денис"),
+            cab.ConteinIcon(icon_name=ft.icons.SATELLITE_ALT, text="Космические аппараты"),
+            cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
+            cab.ConteinIcon(icon_name=ft.icons.TRANSFORM, text="Орбитальная механика"),
+            cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Иностранные полигоны"),
+            cab.ConteinIcon(icon_name=ft.icons.STAR, text="Характеристики средств СККП"),
+            cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
+            cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Ракет-носители"),
+            ft.Divider(height=5, color="GREY_300"),
+            cab.ConteinIcon(icon_name=ft.icons.LOGIN_ROUNDED, text="Выход", click=out_auth)
+        ],
+    )
+
+    def open_drawer(e):
+        page.drawer = drawer
+        page.drawer.open = True
+        page.drawer.visible = True
+        page.update()
+
+    def close_drawer(e):
+        page.drawer.visible = False
+        page.update()
+
     # Верхний бар
     dark_light_icon = ft.IconButton(
         icon=ft.icons.SUNNY,
@@ -29,7 +73,7 @@ def main(page: ft.Page):
     )
 
     page.appbar = ft.AppBar(
-        title=ft.Text("Главный центр РКО"),
+        title=ft.Text("Добро пожаловать"),
         actions=[
             dark_light_icon
         ],
@@ -46,28 +90,43 @@ def main(page: ft.Page):
             btn_auth.disabled = True
         page.update()
 
-    user_email = ft.TextField(label="Подразделение", width=200, on_change=validate)
-    user_login = ft.TextField(label="Введите логин", width=200, on_change=validate)
-    user_password = ft.TextField(label="Введите пароль", password=True, width=200, on_change=validate)
+    user_division = ft.TextField(label="Подразделение", width=200, on_change=validate)
+    user_zvanie = ft.TextField(label="Звание", width=200, on_change=validate)
+    user_surname = ft.TextField(label="Фамилия", width=200, on_change=validate)
+    user_name = ft.TextField(label="Имя", width=200, on_change=validate)
+    user_login = ft.TextField(label="Логин", width=200, on_change=validate)
+    user_password = ft.TextField(label="Пароль", password=True, width=200, on_change=validate)
     admin_password = ft.TextField(label="Код администратора", password=True, width=200, on_change=validate)
 
     def register(e):
         """Функция регистрации"""
         connect.create_structure()
         if admin_password.value == config.ADMIN_PASSWORD:
-            connect.add_new_user(user_login.value, user_password.value, user_email.value)
+            connect.add_new_user(user_login.value,
+                                 user_password.value,
+                                 user_division.value,
+                                 user_name.value,
+                                 user_surname.value,
+                                 user_zvanie.value)
             user_login.value = ''
             user_password.value = ''
-            user_email.value = ''
+            user_division.value = ''
+            user_name.value = ''
+            user_surname.value = ''
+            user_zvanie.value = ''
+            admin_password.value = ''
             btn_reg.text = 'Добавлено'
             page.update()
-            time.sleep(2)
+            time.sleep(1)
             btn_reg.text = 'Добавить'
             page.update()
         else:
             user_login.value = ''
             user_password.value = ''
-            user_email.value = ''
+            user_division.value = ''
+            user_name.value = ''
+            user_surname.value = ''
+            user_zvanie.value = ''
             admin_password.value = ''
             page.snack_bar = ft.SnackBar(ft.Text("Код администратора не верный!"))
             page.snack_bar.open = True
@@ -79,12 +138,14 @@ def main(page: ft.Page):
         answer = connect.auth_user(login=user_login.value, password=user_password.value)
         if answer is not None:
             auth_flag = True
-            page.navigation_bar.destinations[1] = ft.NavigationDestination(icon=ft.cupertino_icons.STAR,
-                                                                           label="Личный кабинет",
-                                                                           selected_icon=ft.icons.STAR_ROUNDED)
+            page.navigation_bar.visible = False
             user_login.value = ''
             user_password.value = ''
-            page.appbar.title = ft.Text("Личный кабинет")
+            open_drawer(e)
+            page.appbar.title = ft.Row(
+            [
+                ft.Text("Главный центр РКО")
+            ])
             page.clean()
             page.add(panel_cabinet)
             page.update()
@@ -102,7 +163,10 @@ def main(page: ft.Page):
         ft.Column(
             [
                 ft.Text("Регистрация"),
-                user_email,
+                user_division,
+                user_zvanie,
+                user_surname,
+                user_name,
                 user_login,
                 user_password,
                 admin_password,
@@ -127,14 +191,10 @@ def main(page: ft.Page):
     panel_cabinet = ft.Row([
         ft.Column(
             [
-                ft.Text("Личный кабинет"),
-                ft.Container()
+                ft.Text(value="Просто текст")
             ]
         ),
-    ], alignment=ft.MainAxisAlignment.CENTER)
-
-    def cabinet(e):
-        pass
+    ])
 
     def navigate(e):
         global auth_flag
