@@ -8,10 +8,12 @@ auth_flag = False
 
 
 def main(page: ft.Page):
+    global auth_flag
     page.title = "Добро пожаловать "
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = 'dark'
     page.adaptive = True
+    page.window_maximized = True
 
     connect = UseDB(user=config.USER, password=config.PASSWORD, name_db=config.NAME_DB)
     cab = ModernNavBar()
@@ -40,26 +42,72 @@ def main(page: ft.Page):
         auth_flag = False
         page.update()
 
-    drawer = ft.NavigationDrawer(
-        indicator_shape=None,
-        controls=[
-            cab.user_data("ОБАиП", "ст.лейтенант", "Бузин Денис"),
-            cab.ConteinIcon(icon_name=ft.icons.SATELLITE_ALT, text="Космические аппараты"),
-            cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
-            cab.ConteinIcon(icon_name=ft.icons.TRANSFORM, text="Орбитальная механика"),
-            cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Иностранные полигоны"),
-            cab.ConteinIcon(icon_name=ft.icons.STAR, text="Характеристики средств СККП"),
-            cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
-            cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Ракет-носители"),
-            ft.Divider(height=5, color="GREY_300"),
-            cab.ConteinIcon(icon_name=ft.icons.LOGIN_ROUNDED, text="Выход", click=out_auth)
-        ],
-    )
+    def validate(e):
+        """ Функция включения кнопок при наборе """
+        if all([user_login.value, user_password.value]):
+            btn_reg.disabled = False
+            btn_auth.disabled = False
+        else:
+            btn_reg.disabled = True
+            btn_auth.disabled = True
+        page.update()
 
-    def open_drawer(e):
+    user_division = ft.TextField(label="Подразделение", width=200, on_change=validate)
+    user_zvanie = ft.TextField(label="Звание", width=200, on_change=validate)
+    user_surname = ft.TextField(label="Фамилия", width=200, on_change=validate)
+    user_name = ft.TextField(label="Имя", width=200, on_change=validate)
+    user_login = ft.TextField(label="Логин", width=200, on_change=validate)
+    user_password = ft.TextField(label="Пароль", password=True, width=200, on_change=validate)
+    admin_password = ft.TextField(label="Код администратора", password=True, width=200, on_change=validate)
+
+    def auth_user(e):
+        global auth_flag
+        """Функция авторизации"""
+        answer = connect.auth_user(login=user_login.value, password=user_password.value)
+        if answer is not None:
+            auth_flag = True
+            page.navigation_bar.visible = False
+            open_drawer(e,
+                        connect.auth_user(login=user_login.value, password=user_password.value)[3],
+                        connect.auth_user(login=user_login.value, password=user_password.value)[6],
+                        connect.auth_user(login=user_login.value, password=user_password.value)[4],
+                        connect.auth_user(login=user_login.value, password=user_password.value)[5])
+            user_login.value = ''
+            user_password.value = ''
+            page.appbar.title = ft.Row(
+            [
+                ft.Text("Главный центр РКО")
+            ])
+            page.clean()
+            page.add(panel_cabinet)
+            page.update()
+        else:
+            page.snack_bar = ft.SnackBar(ft.Text("Аутентификация не пройдена!"))
+            page.snack_bar.open = True
+            page.update()
+
+    def open_drawer(e, division, zvanie, name, surname):
+        drawer = ft.NavigationDrawer(
+            indicator_shape=None,
+            open=True,
+            visible=True,
+            controls=[
+                cab.user_data(division,
+                              zvanie,
+                              name,
+                              surname),
+                cab.ConteinIcon(icon_name=ft.icons.SATELLITE_ALT, text="Космические аппараты"),
+                cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
+                cab.ConteinIcon(icon_name=ft.icons.TRANSFORM, text="Орбитальная механика"),
+                cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Иностранные полигоны"),
+                cab.ConteinIcon(icon_name=ft.icons.STAR, text="Характеристики средств СККП"),
+                cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
+                cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Ракет-носители"),
+                ft.Divider(height=5, color="GREY_300"),
+                cab.ConteinIcon(icon_name=ft.icons.LOGIN_ROUNDED, text="Выход", click=out_auth)
+            ],
+        )
         page.drawer = drawer
-        page.drawer.open = True
-        page.drawer.visible = True
         page.update()
 
     def close_drawer(e):
@@ -79,24 +127,6 @@ def main(page: ft.Page):
         ],
         bgcolor=ft.colors.with_opacity(0.04, ft.cupertino_colors.SYSTEM_BACKGROUND)
     )
-
-    def validate(e):
-        """ Функция включения кнопок при наборе """
-        if all([user_login.value, user_password.value]):
-            btn_reg.disabled = False
-            btn_auth.disabled = False
-        else:
-            btn_reg.disabled = True
-            btn_auth.disabled = True
-        page.update()
-
-    user_division = ft.TextField(label="Подразделение", width=200, on_change=validate)
-    user_zvanie = ft.TextField(label="Звание", width=200, on_change=validate)
-    user_surname = ft.TextField(label="Фамилия", width=200, on_change=validate)
-    user_name = ft.TextField(label="Имя", width=200, on_change=validate)
-    user_login = ft.TextField(label="Логин", width=200, on_change=validate)
-    user_password = ft.TextField(label="Пароль", password=True, width=200, on_change=validate)
-    admin_password = ft.TextField(label="Код администратора", password=True, width=200, on_change=validate)
 
     def register(e):
         """Функция регистрации"""
@@ -129,28 +159,6 @@ def main(page: ft.Page):
             user_zvanie.value = ''
             admin_password.value = ''
             page.snack_bar = ft.SnackBar(ft.Text("Код администратора не верный!"))
-            page.snack_bar.open = True
-            page.update()
-
-    def auth_user(e):
-        global auth_flag
-        """Функция авторизации"""
-        answer = connect.auth_user(login=user_login.value, password=user_password.value)
-        if answer is not None:
-            auth_flag = True
-            page.navigation_bar.visible = False
-            user_login.value = ''
-            user_password.value = ''
-            open_drawer(e)
-            page.appbar.title = ft.Row(
-            [
-                ft.Text("Главный центр РКО")
-            ])
-            page.clean()
-            page.add(panel_cabinet)
-            page.update()
-        else:
-            page.snack_bar = ft.SnackBar(ft.Text("Аутентификация не пройдена!"))
             page.snack_bar.open = True
             page.update()
 
@@ -218,7 +226,7 @@ def main(page: ft.Page):
         ], on_change=navigate
     )
 
-    page.add(panel_reg)
+    page.add(panel_auth)
 
 
 ft.app(main)

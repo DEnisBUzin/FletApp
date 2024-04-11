@@ -4,6 +4,7 @@ import config
 
 class WorkDB:
     '''Класс соединения базы данных'''
+
     def __init__(self, user, password, name_db):
         self.cursor = None
         self.connection = None
@@ -25,6 +26,7 @@ class WorkDB:
 
 class UseDB(WorkDB):
     '''Класс запросов к базе данных'''
+
     def create_structure(self):
         '''Функция создания структуры'''
         try:
@@ -75,7 +77,7 @@ class UseDB(WorkDB):
                 AND password = %s;
             """
             self.cursor.execute(sql_query, (login, password))
-            answer = self.cursor.fetchall()
+            answer = self.cursor.fetchone()
             if len(answer) != 0:
                 return answer
             else:
@@ -85,9 +87,25 @@ class UseDB(WorkDB):
         finally:
             self.close_connection()
 
+    def get_params_user(self,login: str, password: str):
+        try:
+            self.connect_db()
+            sql_query = f"""
+                SELECT *
+                FROM user_inf
+                WHERE login = %s
+                AND password = %s
+            """
+            self.cursor.execute(sql_query, (login, password))
+            answer = self.cursor.fetchall()
+            return answer
+        except Exception as err:
+            print(f"Error: {err}")
+        finally:
+            self.close_connection()
+
 
 if __name__ == '__main__':
     newClass = UseDB(user=config.USER, password=config.PASSWORD, name_db=config.NAME_DB)
     newClass.create_structure()
-    newClass.add_new_user(login='123', password='123', division='123')
-    print(newClass.auth_user(login='1234', password='123'))
+    print(newClass.auth_user(login='buz', password='buz'))

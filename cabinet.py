@@ -17,7 +17,7 @@ class ModernNavBar(UserControl):
             e.control.bgcolor = None
             e.control.update()
 
-    def user_data(self, initials: str, zvanie: str, name_surname: str) -> Container:
+    def user_data(self, division, zvanie, name, surname) -> Container:
         """Информация о кабинете"""
         return Container(
             padding=padding.only(top=10, left=20, bottom=10),
@@ -32,7 +32,7 @@ class ModernNavBar(UserControl):
                         bgcolor="bluegrey900",
                         border_radius=3,
                         alignment=alignment.center,
-                        content=Text(value=initials,
+                        content=Text(value=division,
                                      size=10,
                                      color="grey"
                                      )
@@ -47,7 +47,7 @@ class ModernNavBar(UserControl):
 
                                   ),
                                   Text(
-                                      value=name_surname,
+                                      value=f"{surname} {name}",
                                       size=11,
                                       opacity=1,
                                       animate_opacity=200,
