@@ -2,7 +2,7 @@ import flet as ft
 from connect_db import UseDB
 import config
 import time
-from cabinet import ModernNavBar
+from cabinet import ModernNavBar, ContentCabinet
 
 auth_flag = False
 
@@ -17,6 +17,7 @@ def main(page: ft.Page):
 
     connect = UseDB(user=config.USER, password=config.PASSWORD, name_db=config.NAME_DB)
     cab = ModernNavBar()
+    content_cab = ContentCabinet()
 
     def theme_changed(e):
         if page.theme_mode == ft.ThemeMode.LIGHT:
@@ -34,10 +35,11 @@ def main(page: ft.Page):
         close_drawer(e)
         page.appbar.title = ft.Text("Главный центр РКО")
         page.add(panel_auth)
-        page.appbar.title = ft.Row(
+        page.appbar.title=ft.Row(
             [
-                ft.Text("Добро пожаловать")
-            ])
+                ft.Image(src="logo.png", height=50, width=50),
+                ft.Text("Добро пожаловать!"),
+            ], alignment=ft.MainAxisAlignment.CENTER)
         page.navigation_bar.visible = True
         auth_flag = False
         page.update()
@@ -60,6 +62,10 @@ def main(page: ft.Page):
     user_password = ft.TextField(label="Пароль", password=True, width=200, on_change=validate)
     admin_password = ft.TextField(label="Код администратора", password=True, width=200, on_change=validate)
 
+    panel_cabinet = ft.Row([
+            ft.Text("Раздел в разработке")
+    ], alignment=ft.MainAxisAlignment.CENTER)
+
     def auth_user(e):
         global auth_flag
         """Функция авторизации"""
@@ -76,8 +82,9 @@ def main(page: ft.Page):
             user_password.value = ''
             page.appbar.title = ft.Row(
             [
+                ft.Image(src="logo.png", height=50, width=50),
                 ft.Text("Главный центр РКО")
-            ])
+            ], alignment=ft.MainAxisAlignment.CENTER)
             page.clean()
             page.add(panel_cabinet)
             page.update()
@@ -86,23 +93,30 @@ def main(page: ft.Page):
             page.snack_bar.open = True
             page.update()
 
+    def navigate_drawer(e):
+        index = e.control.selected_index
+        page.clean()
+        if index == 0:
+            page.add(content_cab.satellite_pindosov())
+        else:
+            page.add(panel_cabinet)
+
     def open_drawer(e, division, zvanie, name, surname):
         drawer = ft.NavigationDrawer(
             indicator_shape=None,
             open=True,
+            selected_index=0,
+            on_change=navigate_drawer,
             visible=True,
             controls=[
-                cab.user_data(division,
-                              zvanie,
-                              name,
-                              surname),
-                cab.ConteinIcon(icon_name=ft.icons.SATELLITE_ALT, text="Космические аппараты"),
-                cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
-                cab.ConteinIcon(icon_name=ft.icons.TRANSFORM, text="Орбитальная механика"),
-                cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Иностранные полигоны"),
-                cab.ConteinIcon(icon_name=ft.icons.STAR, text="Характеристики средств СККП"),
-                cab.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
-                cab.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Ракет-носители"),
+                cab.user_data(division, zvanie, name, surname),
+                ft.NavigationDrawerDestination(label="КСВН", icon=ft.icons.SATELLITE_ALT),
+                ft.NavigationDrawerDestination(icon=ft.icons.ROCKET_SHARP, label="Ракет-носители"),
+                ft.NavigationDrawerDestination(icon=ft.icons.TRANSFORM, label="Орбитальная механика"),
+                ft.NavigationDrawerDestination(icon=ft.cupertino_icons.ROCKET_FILL, label="Иностранные полигоны"),
+                ft.NavigationDrawerDestination(icon=ft.icons.STAR, label="Характеристики средств СККП"),
+                ft.NavigationDrawerDestination(icon=ft.icons.WARNING, label="Обзор контролей"),
+                ft.NavigationDrawerDestination(icon=ft.cupertino_icons.BOOK, label="Руководящие документы"),
                 ft.Divider(height=5, color="GREY_300"),
                 cab.ConteinIcon(icon_name=ft.icons.LOGIN_ROUNDED, text="Выход", click=out_auth)
             ],
@@ -121,7 +135,11 @@ def main(page: ft.Page):
     )
 
     page.appbar = ft.AppBar(
-        title=ft.Text("Добро пожаловать"),
+        title=ft.Row(
+            [
+                ft.Image(src="logo.png", height=50, width=50),
+                ft.Text("Добро пожаловать!")
+            ], alignment=ft.MainAxisAlignment.CENTER),
         actions=[
             dark_light_icon
         ],
@@ -196,13 +214,6 @@ def main(page: ft.Page):
     ], alignment=ft.MainAxisAlignment.CENTER)
 
     # Вкладка Личный кабинет
-    panel_cabinet = ft.Row([
-        ft.Column(
-            [
-                ft.Text(value="Просто текст")
-            ]
-        ),
-    ])
 
     def navigate(e):
         global auth_flag

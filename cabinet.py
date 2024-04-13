@@ -1,8 +1,5 @@
 import flet as ft
 from flet import *
-from functools import partial
-import time
-from abc import ABC, abstractmethod
 
 
 class ModernNavBar(UserControl):
@@ -66,10 +63,10 @@ class ModernNavBar(UserControl):
             border_radius=10,
             on_hover=None,
             padding=padding.only(left=10),
+            on_click=click,
             content=Row(
                 controls=[
                     TextButton(
-                        on_click=click,
                         text=text,
                         height=60,
                         icon=icon_name,
@@ -111,4 +108,63 @@ class ModernNavBar(UserControl):
                 ]
             )
 
+        )
+
+
+class ContentCabinet(ModernNavBar):
+    def left_panel_drawer(self, func_change, division='', zvanie='', name='', surname=''):
+        return ft.NavigationDrawer(
+            indicator_shape=None,
+            open=True,
+            on_change=func_change,
+            visible=False,
+            controls=[
+                self.user_data(division, zvanie, name, surname),
+                self.ConteinIcon(icon_name=ft.icons.SATELLITE_ALT, text="Космические аппараты"),
+                self.ConteinIcon(icon_name=ft.icons.ROCKET_SHARP, text="Ракет-носители"),
+                self.ConteinIcon(icon_name=ft.icons.TRANSFORM, text="Орбитальная механика"),
+                self.ConteinIcon(icon_name=ft.cupertino_icons.ROCKET_FILL, text="Иностранные полигоны"),
+                self.ConteinIcon(icon_name=ft.icons.STAR, text="Характеристики средств СККП"),
+                self.ConteinIcon(icon_name=ft.icons.WARNING, text="Обзор контролей"),
+                self.ConteinIcon(icon_name=ft.cupertino_icons.BOOK, text="Руководящие документы"),
+                ft.Divider(height=5, color="GREY_300"),
+                self.ConteinIcon(icon_name=ft.icons.LOGIN_ROUNDED, text="Выход",)
+            ],
+        )
+
+
+    def satellite_pindosov(self):
+        return ft.Tabs(
+            selected_index=1,
+            animation_duration=300,
+            tabs=[
+                ft.Tab(
+                    text="США",
+                    content=ft.Container(
+                        content=ft.Text("Здесь про спутники США")
+                    ),
+                ),
+                ft.Tab(
+                    text="Китай",
+                    content=ft.Text("Здесь про спутники Китая"),
+                ),
+                ft.Tab(
+                    text="Индия",
+                    content=ft.Text("Здесь про спутники Индии"),
+                ),
+                ft.Tab(
+                    text="Япония",
+                    content=ft.Text("Здесь про спутники Япония"),
+                ),
+                ft.Tab(
+                    text="Канада",
+                    content=ft.Text("Здесь про спутники Канады"),
+                ),
+                ft.Tab(
+                    text="Финляндия",
+                    content=ft.Text("Здесь про спутники Финляндии"),
+                )
+
+
+            ]
         )
